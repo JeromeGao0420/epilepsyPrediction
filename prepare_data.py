@@ -12,6 +12,7 @@ MPS兼容性说明:
 import os
 import numpy as np
 from pathlib import Path
+from processData import process_all_files
 try:
     from sklearn.model_selection import train_test_split
 except ImportError:
@@ -27,8 +28,6 @@ except ImportError:
         train_idx = indices[n_test:]
         
         return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
-
-from processData import process_all_files
 
 def prepare_chbmit_data(data_dir="./database/physionet.org/files/chbmit/1.0.0/", 
                        test_size=0.2, random_state=42):

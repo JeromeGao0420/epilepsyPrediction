@@ -100,7 +100,7 @@ def run_training():
     
     print("正在运行模型训练...")
     try:
-        result = subprocess.run([sys.executable, 'train.py'], 
+        result = subprocess.run([sys.executable, 'train_attention.py'], 
                               capture_output=True, text=True)
         
         # 实时输出训练过程
