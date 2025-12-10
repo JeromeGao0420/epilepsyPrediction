@@ -1,0 +1,82 @@
+2025-12-10 17:19:50,472 - INFO - === 增强版癫痫检测训练开始 ===
+2025-12-10 17:19:50,472 - INFO - 选择的模型: BaseEEGNet
+2025-12-10 17:19:50,472 - INFO - 训练参数: {'model': 'BaseEEGNet', 'batch_size': 32, 'learning_rate': 0.001, 'epochs': 30, 'device': 'auto', 'chans': 23, 'samples': 512, 'num_classes': 2, 'hidden_dim': 128, 'num_layers': 2, 'attention_heads': 4, 'dropout': 0.15, 'save_attention': False, 'output_dir': 'outputs'}
+2025-12-10 17:19:50,480 - INFO - 使用设备: mps
+2025-12-10 17:19:50,616 - INFO - 数据加载成功:
+2025-12-10 17:19:50,617 - INFO - 训练集: (5000, 23, 512), 标签: (5000,)
+2025-12-10 17:19:50,617 - INFO - 测试集: (1966, 23, 512), 标签: (1966,)
+2025-12-10 17:19:50,617 - INFO - 训练集标签分布: [3500 1500]
+2025-12-10 17:19:50,617 - INFO - 测试集标签分布: [1376  590]
+2025-12-10 17:19:50,650 - INFO - 模型结构:
+EEGNet(
+  (block1): Sequential(
+    (0): Conv2d(1, 8, kernel_size=(1, 64), stride=(1, 1), padding=(0, 32), bias=False)
+    (1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (block2): Sequential(
+    (0): Conv2d(8, 16, kernel_size=(23, 1), stride=(1, 1), groups=8, bias=False)
+    (1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ELU(alpha=1.0)
+    (3): AvgPool2d(kernel_size=(1, 4), stride=(1, 4), padding=0)
+    (4): Dropout(p=0.15, inplace=False)
+  )
+  (block3): Sequential(
+    (0): Conv2d(16, 16, kernel_size=(1, 16), stride=(1, 1), padding=(0, 8), groups=16, bias=False)
+    (1): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (2): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): ELU(alpha=1.0)
+    (4): AvgPool2d(kernel_size=(1, 8), stride=(1, 8), padding=0)
+    (5): Dropout(p=0.15, inplace=False)
+  )
+  (classifier): Sequential(
+    (0): Flatten(start_dim=1, end_dim=-1)
+    (1): Linear(in_features=256, out_features=2, bias=True)
+  )
+)
+2025-12-10 17:19:51,165 - INFO - 开始训练...
+2025-12-10 17:19:53,959 - INFO - Epoch [1/30] - Train Loss: 0.3540, Train Acc: 85.88% - Val Loss: 0.1430, Val Acc: 94.50%
+2025-12-10 17:19:55,960 - INFO - Epoch [2/30] - Train Loss: 0.1126, Train Acc: 96.12% - Val Loss: 0.1213, Val Acc: 97.20%
+2025-12-10 17:19:57,933 - INFO - Epoch [3/30] - Train Loss: 0.0520, Train Acc: 98.38% - Val Loss: 0.0253, Val Acc: 99.10%
+2025-12-10 17:19:59,838 - INFO - Epoch [4/30] - Train Loss: 0.0343, Train Acc: 98.92% - Val Loss: 0.0140, Val Acc: 99.90%
+2025-12-10 17:20:01,734 - INFO - Epoch [5/30] - Train Loss: 0.0275, Train Acc: 99.40% - Val Loss: 0.0084, Val Acc: 100.00%
+2025-12-10 17:20:03,932 - INFO - Epoch [6/30] - Train Loss: 0.0179, Train Acc: 99.55% - Val Loss: 0.0062, Val Acc: 100.00%
+2025-12-10 17:20:06,151 - INFO - Epoch [7/30] - Train Loss: 0.0172, Train Acc: 99.35% - Val Loss: 0.0119, Val Acc: 99.70%
+2025-12-10 17:20:08,307 - INFO - Epoch [8/30] - Train Loss: 0.0089, Train Acc: 99.85% - Val Loss: 0.0081, Val Acc: 99.80%
+2025-12-10 17:20:10,550 - INFO - Epoch [9/30] - Train Loss: 0.0120, Train Acc: 99.70% - Val Loss: 0.0039, Val Acc: 100.00%
+2025-12-10 17:20:12,749 - INFO - Epoch [10/30] - Train Loss: 0.0139, Train Acc: 99.47% - Val Loss: 0.0045, Val Acc: 99.90%
+2025-12-10 17:20:15,034 - INFO - Epoch [11/30] - Train Loss: 0.0142, Train Acc: 99.58% - Val Loss: 0.0033, Val Acc: 99.90%
+2025-12-10 17:20:17,242 - INFO - Epoch [12/30] - Train Loss: 0.0078, Train Acc: 99.78% - Val Loss: 0.0125, Val Acc: 99.50%
+2025-12-10 17:20:19,447 - INFO - Epoch [13/30] - Train Loss: 0.0147, Train Acc: 99.55% - Val Loss: 0.0078, Val Acc: 99.70%
+2025-12-10 17:20:21,623 - INFO - Epoch [14/30] - Train Loss: 0.0108, Train Acc: 99.67% - Val Loss: 0.0092, Val Acc: 99.70%
+2025-12-10 17:20:23,544 - INFO - Epoch [15/30] - Train Loss: 0.0139, Train Acc: 99.42% - Val Loss: 0.0041, Val Acc: 99.90%
+2025-12-10 17:20:25,751 - INFO - Epoch [16/30] - Train Loss: 0.0049, Train Acc: 99.90% - Val Loss: 0.0032, Val Acc: 99.80%
+2025-12-10 17:20:27,890 - INFO - Epoch [17/30] - Train Loss: 0.0046, Train Acc: 99.92% - Val Loss: 0.0030, Val Acc: 99.90%
+2025-12-10 17:20:30,107 - INFO - Epoch [18/30] - Train Loss: 0.0078, Train Acc: 99.85% - Val Loss: 0.0016, Val Acc: 100.00%
+2025-12-10 17:20:32,292 - INFO - Epoch [19/30] - Train Loss: 0.0081, Train Acc: 99.78% - Val Loss: 0.0070, Val Acc: 99.70%
+2025-12-10 17:20:34,548 - INFO - Epoch [20/30] - Train Loss: 0.0165, Train Acc: 99.55% - Val Loss: 0.0207, Val Acc: 99.60%
+2025-12-10 17:20:36,667 - INFO - Epoch [21/30] - Train Loss: 0.0055, Train Acc: 99.80% - Val Loss: 0.0013, Val Acc: 100.00%
+2025-12-10 17:20:38,586 - INFO - Epoch [22/30] - Train Loss: 0.0070, Train Acc: 99.70% - Val Loss: 0.0018, Val Acc: 99.90%
+2025-12-10 17:20:40,521 - INFO - Epoch [23/30] - Train Loss: 0.0060, Train Acc: 99.72% - Val Loss: 0.0021, Val Acc: 100.00%
+2025-12-10 17:20:42,457 - INFO - Epoch [24/30] - Train Loss: 0.0047, Train Acc: 99.90% - Val Loss: 0.0022, Val Acc: 99.90%
+2025-12-10 17:20:44,475 - INFO - Epoch [25/30] - Train Loss: 0.0052, Train Acc: 99.88% - Val Loss: 0.0102, Val Acc: 99.50%
+2025-12-10 17:20:46,643 - INFO - Epoch [26/30] - Train Loss: 0.0064, Train Acc: 99.78% - Val Loss: 0.0005, Val Acc: 100.00%
+2025-12-10 17:20:48,844 - INFO - Epoch [27/30] - Train Loss: 0.0043, Train Acc: 99.90% - Val Loss: 0.0029, Val Acc: 99.90%
+2025-12-10 17:20:51,104 - INFO - Epoch [28/30] - Train Loss: 0.0051, Train Acc: 99.88% - Val Loss: 0.0022, Val Acc: 99.90%
+2025-12-10 17:20:53,278 - INFO - Epoch [29/30] - Train Loss: 0.0054, Train Acc: 99.80% - Val Loss: 0.0022, Val Acc: 99.90%
+2025-12-10 17:20:55,449 - INFO - Epoch [30/30] - Train Loss: 0.0040, Train Acc: 99.85% - Val Loss: 0.0093, Val Acc: 99.50%
+2025-12-10 17:20:55,450 - INFO - 已加载最佳模型 (验证准确率: 100.00%)
+2025-12-10 17:20:55,450 - INFO - 训练完成，耗时: 64.28 秒
+2025-12-10 17:20:55,450 - INFO - 开始评估...
+2025-12-10 17:20:55,770 - INFO - === 测试集性能评估 ===
+2025-12-10 17:20:55,770 - INFO - 准确率 (Accuracy): 0.6129
+2025-12-10 17:20:55,770 - INFO - 精确率 (Precision): 0.8090
+2025-12-10 17:20:55,770 - INFO - 召回率 (Recall): 0.6129
+2025-12-10 17:20:55,770 - INFO - F1分数: 0.6176
+2025-12-10 17:20:55,770 - INFO - 混淆矩阵:
+[[635 741]
+ [ 20 570]]
+2025-12-10 17:20:55,779 - INFO - 模型已保存到: outputs/models/BaseEEGNet_best.pth
+2025-12-10 17:20:56,285 - INFO - === 训练完成 ===
+2025-12-10 17:20:56,285 - INFO - 最佳验证准确率: 100.00%
+2025-12-10 17:20:56,285 - INFO - 测试准确率: 0.6129
+2025-12-10 17:20:56,285 - INFO - 日志文件: outputs/logs/training_log_20251210_171950.txt

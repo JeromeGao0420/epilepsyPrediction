@@ -1,0 +1,75 @@
+# 增强版癫痫检测项目依赖
+# 整合原有项目和EEG-Epilepsy-Prediction项目的依赖
+
+# 核心深度学习框架
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# 科学计算和数据处理
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# EEG数据处理
+mne>=1.4.0
+pyedflib>=0.1.34
+edflib-python>=1.0.6
+
+# 可视化
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# 配置文件处理
+PyYAML>=6.0
+omegaconf>=2.3.0
+hydra-core>=1.3.0
+
+# 进度条和日志
+tqdm>=4.65.0
+rich>=13.0.0
+tensorboard>=2.13.0
+wandb>=0.15.0  # 可选：实验跟踪
+
+# 超参数优化
+optuna>=3.4.0
+ray[tune]>=2.6.0  # 可选：分布式超参数搜索
+
+# 模型导出和部署
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# 数据增强
+albumentations>=1.3.0  # 可选：数据增强
+
+# 内存优化
+psutil>=5.9.0
+memory-profiler>=0.61.0
+
+# 并行处理
+joblib>=1.3.0
+multiprocess>=0.70.0
+
+# 统计分析
+statsmodels>=0.14.0
+
+# 开发工具
+jupyter>=1.0.0
+ipython>=8.14.0
+black>=23.0.0  # 代码格式化
+flake8>=6.0.0  # 代码检查
+
+# 测试框架
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# 文档生成
+sphinx>=7.1.0
+sphinx-rtd-theme>=1.3.0
+
+# 其他实用工具
+click>=8.1.0  # 命令行接口
+colorama>=0.4.6  # 彩色输出
+pathlib2>=2.3.7  # 路径处理
