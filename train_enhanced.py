@@ -33,9 +33,12 @@ plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
 # 导入模型
-from ablation_models import BaseEEGNet as ModelEEGNet
-from ablation_models import AttentionEEGNet
-from advanced_models import AttentionBiLSTM
+from ablation_models.BaseEEGNet import EEGNet as BaseEEGNet
+from ablation_models.AttentionEEGNet import EEGNet as AttentionEEGNet
+from ablation_models.AttentionBiLSTM import AttentionBiLSTM
+from ablation_models.DeepConvNet import DeepConvNet
+from ablation_models.ShallowConvNet import ShallowConvNet
+from ablation_models.TCFormer import SimplifiedTCFormer as TCFormer
 
 # --- 1. 配置解析 ---
 def parse_args():
@@ -44,7 +47,8 @@ def parse_args():
     
     # 模型选择
     parser.add_argument('--model', type=str, default='AttentionBiLSTM',
-                       choices=['BaseEEGNet', 'AttentionEEGNet', 'AttentionBiLSTM'],
+                       choices=['BaseEEGNet', 'AttentionEEGNet', 'AttentionBiLSTM', 
+                               'DeepConvNet', 'ShallowConvNet', 'TCFormer'],
                        help='选择要训练的模型')
     
     # 训练参数
@@ -74,12 +78,12 @@ def parse_args():
     return parser.parse_args()
 
 # --- 2. 日志配置 ---
-def setup_logging(output_dir):
+def setup_logging(output_dir, model_name):
     """设置日志记录"""
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(f'{output_dir}/logs', exist_ok=True)
     
-    log_filename = f'{output_dir}/logs/training_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
+    log_filename = f'{output_dir}/logs/{model_name}_training_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
     
     logging.basicConfig(
         level=logging.INFO,
@@ -113,14 +117,14 @@ def get_device(device_preference='auto'):
 def create_model(model_name, args):
     """根据参数创建模型"""
     if model_name == 'BaseEEGNet':
-        model = ModelEEGNet.EEGNet(
+        model = BaseEEGNet(
             nb_classes=args.num_classes,
             Chans=args.chans,
             Samples=args.samples,
             dropoutRate=args.dropout
         )
     elif model_name == 'AttentionEEGNet':
-        model = AttentionEEGNet.EEGNet(
+        model = AttentionEEGNet(
             nb_classes=args.num_classes,
             Chans=args.chans,
             Samples=args.samples,
@@ -136,6 +140,35 @@ def create_model(model_name, args):
             dropout=args.dropout,
             use_attention=True,
             attention_heads=args.attention_heads
+        )
+    elif model_name == 'DeepConvNet':
+        model = DeepConvNet(
+            nb_classes=args.num_classes,
+            Chans=args.chans,
+            Samples=args.samples,
+            dropoutRate=args.dropout
+        )
+    elif model_name == 'ShallowConvNet':
+        model = ShallowConvNet(
+            nb_classes=args.num_classes,
+            Chans=args.chans,
+            Samples=args.samples,
+            dropoutRate=args.dropout
+        )
+    elif model_name == 'TCFormer':
+        model = TCFormer(
+            nb_classes=args.num_classes,
+            Chans=args.chans,
+            Samples=args.samples,
+            temp_kernels=(16, 32, 64),
+            F1=16,
+            D=2,
+            d_model=64,
+            num_heads=8,
+            num_layers=4,
+            tcn_channels=32,
+            tcn_layers=2,
+            dropout=args.dropout
         )
     else:
         raise ValueError(f"未知的模型类型: {model_name}")
@@ -363,7 +396,7 @@ def main():
     args = parse_args()
     
     # 设置日志
-    log_file = setup_logging(args.output_dir)
+    log_file = setup_logging(args.output_dir, args.model)
     logger = logging.getLogger(__name__)
     
     logger.info("=== 增强版癫痫检测训练开始 ===")

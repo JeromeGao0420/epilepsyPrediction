@@ -19,6 +19,7 @@ plt.rcParams['axes.unicode_minus'] = False
 # 导入模型
 sys.path.append(os.path.join(os.path.dirname(__file__), 'ablation_models'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'advanced_models'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'comparison_models'))
 
 # --- 1. 参数设置 ---
 CHANS = 23  # EEG通道数 (CHB-MIT)
@@ -36,7 +37,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='EEG拓扑图可视化工具')
     
     parser.add_argument('--model', type=str, default='BaseEEGNet',
-                        choices=['BaseEEGNet', 'AttentionEEGNet', 'AttentionBiLSTM'],
+                        choices=['BaseEEGNet', 'AttentionEEGNet', 'AttentionBiLSTM', 
+                                'DeepConvNet', 'ShallowConvNet', 'TCFormer'],
                         help='选择要可视化的模型')
     
     parser.add_argument('--model_path', type=str, default=None,
@@ -88,6 +90,41 @@ def create_model(model_name, args=None):
             attention_heads=4
         )
     
+    elif model_name == 'DeepConvNet':
+        from ablation_models.DeepConvNet import DeepConvNet
+        return DeepConvNet(
+            nb_classes=2,
+            Chans=CHANS,
+            Samples=SAMPLES,
+            dropoutRate=0.5
+        )
+    
+    elif model_name == 'ShallowConvNet':
+        from ablation_models.ShallowConvNet import ShallowConvNet
+        return ShallowConvNet(
+            nb_classes=2,
+            Chans=CHANS,
+            Samples=SAMPLES,
+            dropoutRate=0.5
+        )
+    
+    elif model_name == 'TCFormer':
+        from ablation_models.TCFormer import SimplifiedTCFormer
+        return SimplifiedTCFormer(
+            nb_classes=2,
+            Chans=CHANS,
+            Samples=SAMPLES,
+            temp_kernels=(16, 32, 64),
+            F1=16,
+            D=2,
+            d_model=64,
+            num_heads=8,
+            num_layers=4,
+            tcn_channels=32,
+            tcn_layers=2,
+            dropout=0.3
+        )
+    
     else:
         raise ValueError(f"不支持的模型: {model_name}")
 
@@ -109,6 +146,10 @@ def get_spatial_weights_for_topomap(model, model_name, data_loader):
         return get_eegnet_weights(model, data_loader)
     elif model_name == 'AttentionBiLSTM':
         return get_bilstm_weights(model, data_loader)
+    elif model_name in ['DeepConvNet', 'ShallowConvNet']:
+        return get_convnet_weights(model, model_name, data_loader)
+    elif model_name == 'TCFormer':
+        return get_tcformer_weights(model, data_loader)
     else:
         print(f"未知模型类型: {model_name}")
         return np.ones(CHANS) / CHANS
@@ -185,6 +226,92 @@ def get_eegnet_weights(model, data_loader):
     final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
     return final_scores
 
+def get_tcformer_weights(model, data_loader):
+    """提取TCFormer模型的权重"""
+    try:
+        # TCFormer结合了卷积、Transformer和TCN，我们主要关注卷积前端的空间权重
+        conv_frontend = model.conv_frontend
+        
+        # 获取多核卷积块中的空间卷积权重
+        spatial_weights_list = []
+        
+        for spatial_conv_block in conv_frontend.spatial_convs:
+            # 获取空间卷积层（深度卷积）
+            spatial_conv = spatial_conv_block[0]  # 第一个是Conv2d层
+            if hasattr(spatial_conv, 'weight'):
+                weights = spatial_conv.weight.data.cpu().numpy()
+                if len(weights.shape) == 4 and weights.shape[2] == CHANS:
+                    # 对输出通道和其他维度求平均，保留通道维度
+                    channel_scores = np.mean(np.abs(weights), axis=(0, 1, 3))
+                    spatial_weights_list.append(channel_scores)
+        
+        # 如果获取到多个空间权重，取平均
+        if spatial_weights_list:
+            channel_scores = np.mean(spatial_weights_list, axis=0)
+        else:
+            channel_scores = np.ones(CHANS) / CHANS
+        
+        # 使用实际数据增强权重计算
+        all_activations = []
+        
+        with torch.no_grad():
+            sample_count = 0
+            for inputs, labels in data_loader:
+                if sample_count >= 10:
+                    break
+                    
+                inputs = inputs.to(DEVICE)
+                
+                # 获取中间特征图
+                if hasattr(model, 'get_feature_maps'):
+                    features = model.get_feature_maps(inputs)
+                    
+                    # 使用卷积特征
+                    if 'conv_features' in features:
+                        conv_features = features['conv_features']  # [B, channels, T]
+                        
+                        # 计算激活强度
+                        activation = torch.mean(torch.abs(conv_features), dim=(0, 2))  # [channels]
+                        activation = activation.cpu().numpy()
+                        
+                        # 映射到通道数
+                        if len(activation) >= CHANS:
+                            if len(activation) == CHANS:
+                                all_activations.append(activation)
+                            else:
+                                # 分组平均映射到通道数
+                                group_size = len(activation) // CHANS
+                                grouped_activation = []
+                                for i in range(CHANS):
+                                    start_idx = i * group_size
+                                    end_idx = start_idx + group_size
+                                    if end_idx <= len(activation):
+                                        grouped_activation.append(np.mean(activation[start_idx:end_idx]))
+                                    else:
+                                        grouped_activation.append(activation[start_idx])
+                                all_activations.append(np.array(grouped_activation))
+                
+                sample_count += 1
+        
+        # 结合静态权重和动态激活
+        if all_activations:
+            mean_activation = np.mean(all_activations, axis=0)
+            if len(mean_activation) == CHANS:
+                # 结合静态权重和动态激活
+                final_scores = channel_scores * 0.3 + mean_activation * 0.7
+            else:
+                final_scores = channel_scores
+        else:
+            final_scores = channel_scores
+        
+    except Exception as e:
+        print(f"提取TCFormer权重时出错: {e}")
+        final_scores = np.ones(CHANS) / CHANS
+    
+    # 归一化
+    final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
+    return final_scores
+
 def get_bilstm_weights(model, data_loader):
     """提取BiLSTM模型的注意力权重"""
     try:
@@ -234,6 +361,92 @@ def get_bilstm_weights(model, data_loader):
     final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
     return final_scores
 
+def get_tcformer_weights(model, data_loader):
+    """提取TCFormer模型的权重"""
+    try:
+        # TCFormer结合了卷积、Transformer和TCN，我们主要关注卷积前端的空间权重
+        conv_frontend = model.conv_frontend
+        
+        # 获取多核卷积块中的空间卷积权重
+        spatial_weights_list = []
+        
+        for spatial_conv_block in conv_frontend.spatial_convs:
+            # 获取空间卷积层（深度卷积）
+            spatial_conv = spatial_conv_block[0]  # 第一个是Conv2d层
+            if hasattr(spatial_conv, 'weight'):
+                weights = spatial_conv.weight.data.cpu().numpy()
+                if len(weights.shape) == 4 and weights.shape[2] == CHANS:
+                    # 对输出通道和其他维度求平均，保留通道维度
+                    channel_scores = np.mean(np.abs(weights), axis=(0, 1, 3))
+                    spatial_weights_list.append(channel_scores)
+        
+        # 如果获取到多个空间权重，取平均
+        if spatial_weights_list:
+            channel_scores = np.mean(spatial_weights_list, axis=0)
+        else:
+            channel_scores = np.ones(CHANS) / CHANS
+        
+        # 使用实际数据增强权重计算
+        all_activations = []
+        
+        with torch.no_grad():
+            sample_count = 0
+            for inputs, labels in data_loader:
+                if sample_count >= 10:
+                    break
+                    
+                inputs = inputs.to(DEVICE)
+                
+                # 获取中间特征图
+                if hasattr(model, 'get_feature_maps'):
+                    features = model.get_feature_maps(inputs)
+                    
+                    # 使用卷积特征
+                    if 'conv_features' in features:
+                        conv_features = features['conv_features']  # [B, channels, T]
+                        
+                        # 计算激活强度
+                        activation = torch.mean(torch.abs(conv_features), dim=(0, 2))  # [channels]
+                        activation = activation.cpu().numpy()
+                        
+                        # 映射到通道数
+                        if len(activation) >= CHANS:
+                            if len(activation) == CHANS:
+                                all_activations.append(activation)
+                            else:
+                                # 分组平均映射到通道数
+                                group_size = len(activation) // CHANS
+                                grouped_activation = []
+                                for i in range(CHANS):
+                                    start_idx = i * group_size
+                                    end_idx = start_idx + group_size
+                                    if end_idx <= len(activation):
+                                        grouped_activation.append(np.mean(activation[start_idx:end_idx]))
+                                    else:
+                                        grouped_activation.append(activation[start_idx])
+                                all_activations.append(np.array(grouped_activation))
+                
+                sample_count += 1
+        
+        # 结合静态权重和动态激活
+        if all_activations:
+            mean_activation = np.mean(all_activations, axis=0)
+            if len(mean_activation) == CHANS:
+                # 结合静态权重和动态激活
+                final_scores = channel_scores * 0.3 + mean_activation * 0.7
+            else:
+                final_scores = channel_scores
+        else:
+            final_scores = channel_scores
+        
+    except Exception as e:
+        print(f"提取TCFormer权重时出错: {e}")
+        final_scores = np.ones(CHANS) / CHANS
+    
+    # 归一化
+    final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
+    return final_scores
+
 def get_lstm_weight_approximation(model):
     """从LSTM权重近似计算通道重要性"""
     try:
@@ -253,6 +466,189 @@ def get_lstm_weight_approximation(model):
             return np.ones(CHANS) / CHANS
     except:
         return np.ones(CHANS) / CHANS
+
+def get_convnet_weights(model, model_name, data_loader):
+    """提取DeepConvNet和ShallowConvNet的空间权重"""
+    try:
+        # 获取空间卷积层的权重
+        spatial_conv = None
+        
+        if model_name == 'DeepConvNet':
+            # DeepConvNet的第一个block中的空间卷积
+            for layer in model.block1:
+                if isinstance(layer, torch.nn.Conv2d) and layer.kernel_size[0] == CHANS:
+                    spatial_conv = layer
+                    break
+        elif model_name == 'ShallowConvNet':
+            # ShallowConvNet的空间卷积层
+            spatial_conv = model.spatial_conv
+        
+        if spatial_conv is None:
+            print(f"未找到{model_name}的空间卷积层，使用默认权重")
+            return np.ones(CHANS) / CHANS
+            
+        spatial_weights = spatial_conv.weight.data.cpu().numpy()
+        print(f"{model_name}空间卷积权重形状: {spatial_weights.shape}")
+        
+        # 计算每个通道的重要性分数
+        if len(spatial_weights.shape) == 4:
+            # 对输出通道和其他维度求平均，保留通道维度
+            if spatial_weights.shape[2] == CHANS:  # 空间维度是通道数
+                channel_scores = np.mean(np.abs(spatial_weights), axis=(0, 1, 3))  # 形状: (Chans,)
+            else:
+                channel_scores = np.ones(CHANS) / CHANS
+        else:
+            channel_scores = np.ones(CHANS) / CHANS
+        
+        # 使用实际数据增强权重计算
+        all_activations = []
+        
+        with torch.no_grad():
+            sample_count = 0
+            for inputs, labels in data_loader:
+                if sample_count >= 10:
+                    break
+                    
+                inputs = inputs.to(DEVICE)
+                
+                # 获取中间特征图
+                if hasattr(model, 'get_feature_maps'):
+                    features = model.get_feature_maps(inputs)
+                    
+                    # 根据模型类型选择特征图
+                    if model_name == 'DeepConvNet' and 'block1' in features:
+                        block_features = features['block1']
+                    elif model_name == 'ShallowConvNet' and 'spatial_conv' in features:
+                        block_features = features['spatial_conv']
+                    else:
+                        block_features = None
+                    
+                    if block_features is not None:
+                        # 计算激活强度
+                        activation = torch.mean(torch.abs(block_features), dim=(0, 2, 3))  # [out_channels]
+                        activation = activation.cpu().numpy()
+                        
+                        # 如果输出通道数大于输入通道数，需要映射回输入通道
+                        if len(activation) >= CHANS:
+                            # 简化处理：取前CHANS个或平均分组
+                            if len(activation) == CHANS:
+                                all_activations.append(activation)
+                            else:
+                                # 分组平均
+                                group_size = len(activation) // CHANS
+                                grouped_activation = []
+                                for i in range(CHANS):
+                                    start_idx = i * group_size
+                                    end_idx = start_idx + group_size
+                                    grouped_activation.append(np.mean(activation[start_idx:end_idx]))
+                                all_activations.append(np.array(grouped_activation))
+                
+                sample_count += 1
+        
+        # 结合静态权重和动态激活
+        if all_activations:
+            mean_activation = np.mean(all_activations, axis=0)
+            if len(mean_activation) == CHANS:
+                # 结合静态权重和动态激活
+                final_scores = channel_scores * 0.4 + mean_activation * 0.6
+            else:
+                final_scores = channel_scores
+        else:
+            final_scores = channel_scores
+        
+    except Exception as e:
+        print(f"提取{model_name}权重时出错: {e}")
+        final_scores = np.ones(CHANS) / CHANS
+    
+    # 归一化
+    final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
+    return final_scores
+
+def get_tcformer_weights(model, data_loader):
+    """提取TCFormer模型的权重"""
+    try:
+        # TCFormer结合了卷积、Transformer和TCN，我们主要关注卷积前端的空间权重
+        conv_frontend = model.conv_frontend
+        
+        # 获取多核卷积块中的空间卷积权重
+        spatial_weights_list = []
+        
+        for spatial_conv_block in conv_frontend.spatial_convs:
+            # 获取空间卷积层（深度卷积）
+            spatial_conv = spatial_conv_block[0]  # 第一个是Conv2d层
+            if hasattr(spatial_conv, 'weight'):
+                weights = spatial_conv.weight.data.cpu().numpy()
+                if len(weights.shape) == 4 and weights.shape[2] == CHANS:
+                    # 对输出通道和其他维度求平均，保留通道维度
+                    channel_scores = np.mean(np.abs(weights), axis=(0, 1, 3))
+                    spatial_weights_list.append(channel_scores)
+        
+        # 如果获取到多个空间权重，取平均
+        if spatial_weights_list:
+            channel_scores = np.mean(spatial_weights_list, axis=0)
+        else:
+            channel_scores = np.ones(CHANS) / CHANS
+        
+        # 使用实际数据增强权重计算
+        all_activations = []
+        
+        with torch.no_grad():
+            sample_count = 0
+            for inputs, labels in data_loader:
+                if sample_count >= 10:
+                    break
+                    
+                inputs = inputs.to(DEVICE)
+                
+                # 获取中间特征图
+                if hasattr(model, 'get_feature_maps'):
+                    features = model.get_feature_maps(inputs)
+                    
+                    # 使用卷积特征
+                    if 'conv_features' in features:
+                        conv_features = features['conv_features']  # [B, channels, T]
+                        
+                        # 计算激活强度
+                        activation = torch.mean(torch.abs(conv_features), dim=(0, 2))  # [channels]
+                        activation = activation.cpu().numpy()
+                        
+                        # 映射到通道数
+                        if len(activation) >= CHANS:
+                            if len(activation) == CHANS:
+                                all_activations.append(activation)
+                            else:
+                                # 分组平均映射到通道数
+                                group_size = len(activation) // CHANS
+                                grouped_activation = []
+                                for i in range(CHANS):
+                                    start_idx = i * group_size
+                                    end_idx = start_idx + group_size
+                                    if end_idx <= len(activation):
+                                        grouped_activation.append(np.mean(activation[start_idx:end_idx]))
+                                    else:
+                                        grouped_activation.append(activation[start_idx])
+                                all_activations.append(np.array(grouped_activation))
+                
+                sample_count += 1
+        
+        # 结合静态权重和动态激活
+        if all_activations:
+            mean_activation = np.mean(all_activations, axis=0)
+            if len(mean_activation) == CHANS:
+                # 结合静态权重和动态激活
+                final_scores = channel_scores * 0.3 + mean_activation * 0.7
+            else:
+                final_scores = channel_scores
+        else:
+            final_scores = channel_scores
+        
+    except Exception as e:
+        print(f"提取TCFormer权重时出错: {e}")
+        final_scores = np.ones(CHANS) / CHANS
+    
+    # 归一化
+    final_scores = final_scores / (np.max(np.abs(final_scores)) + 1e-8)
+    return final_scores
 
 def find_model_file(model_name, model_path=None):
     """查找模型文件"""

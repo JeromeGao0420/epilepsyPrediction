@@ -1,0 +1,69 @@
+2025-12-11 14:32:47,246 - INFO - === 增强版癫痫检测训练开始 ===
+2025-12-11 14:32:47,246 - INFO - 选择的模型: ShallowConvNet
+2025-12-11 14:32:47,246 - INFO - 训练参数: {'model': 'ShallowConvNet', 'batch_size': 32, 'learning_rate': 0.001, 'epochs': 30, 'device': 'auto', 'chans': 23, 'samples': 512, 'num_classes': 2, 'hidden_dim': 128, 'num_layers': 2, 'attention_heads': 4, 'dropout': 0.15, 'save_attention': False, 'output_dir': 'outputs'}
+2025-12-11 14:32:47,256 - INFO - 使用设备: mps
+2025-12-11 14:32:47,358 - INFO - 数据加载成功:
+2025-12-11 14:32:47,358 - INFO - 训练集: (5000, 23, 512), 标签: (5000,)
+2025-12-11 14:32:47,358 - INFO - 测试集: (1966, 23, 512), 标签: (1966,)
+2025-12-11 14:32:47,358 - INFO - 训练集标签分布: [3500 1500]
+2025-12-11 14:32:47,358 - INFO - 测试集标签分布: [1376  590]
+2025-12-11 14:32:47,371 - INFO - 模型结构:
+ShallowConvNet(
+  (temporal_conv): Conv2d(1, 40, kernel_size=(1, 25), stride=(1, 1), bias=False)
+  (spatial_conv): Conv2d(40, 40, kernel_size=(23, 1), stride=(1, 1), bias=False)
+  (batch_norm): BatchNorm2d(40, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (activation): ELU(alpha=1.0)
+  (avg_pool): AvgPool2d(kernel_size=(1, 75), stride=(1, 15), padding=0)
+  (dropout): Dropout(p=0.15, inplace=False)
+  (classifier): Sequential(
+    (0): Flatten(start_dim=1, end_dim=-1)
+    (1): Linear(in_features=1120, out_features=2, bias=True)
+  )
+)
+2025-12-11 14:32:47,863 - INFO - 开始训练...
+2025-12-11 14:32:54,468 - INFO - Epoch [1/30] - Train Loss: 0.4237, Train Acc: 81.53% - Val Loss: 0.2200, Val Acc: 92.20%
+2025-12-11 14:32:59,725 - INFO - Epoch [2/30] - Train Loss: 0.1460, Train Acc: 94.78% - Val Loss: 0.1323, Val Acc: 95.00%
+2025-12-11 14:33:05,201 - INFO - Epoch [3/30] - Train Loss: 0.0929, Train Acc: 97.05% - Val Loss: 0.0990, Val Acc: 96.60%
+2025-12-11 14:33:10,795 - INFO - Epoch [4/30] - Train Loss: 0.0620, Train Acc: 98.15% - Val Loss: 0.0844, Val Acc: 97.20%
+2025-12-11 14:33:16,335 - INFO - Epoch [5/30] - Train Loss: 0.0472, Train Acc: 98.53% - Val Loss: 0.0595, Val Acc: 97.90%
+2025-12-11 14:33:21,848 - INFO - Epoch [6/30] - Train Loss: 0.0380, Train Acc: 98.75% - Val Loss: 0.0414, Val Acc: 98.10%
+2025-12-11 14:33:27,461 - INFO - Epoch [7/30] - Train Loss: 0.0274, Train Acc: 99.22% - Val Loss: 0.0515, Val Acc: 98.20%
+2025-12-11 14:33:33,120 - INFO - Epoch [8/30] - Train Loss: 0.0287, Train Acc: 99.05% - Val Loss: 0.0606, Val Acc: 98.10%
+2025-12-11 14:33:38,753 - INFO - Epoch [9/30] - Train Loss: 0.0206, Train Acc: 99.53% - Val Loss: 0.0283, Val Acc: 99.20%
+2025-12-11 14:33:44,251 - INFO - Epoch [10/30] - Train Loss: 0.0192, Train Acc: 99.47% - Val Loss: 0.0316, Val Acc: 99.00%
+2025-12-11 14:33:49,783 - INFO - Epoch [11/30] - Train Loss: 0.0183, Train Acc: 99.60% - Val Loss: 0.0441, Val Acc: 98.60%
+2025-12-11 14:33:55,377 - INFO - Epoch [12/30] - Train Loss: 0.0144, Train Acc: 99.62% - Val Loss: 0.0395, Val Acc: 99.00%
+2025-12-11 14:34:00,969 - INFO - Epoch [13/30] - Train Loss: 0.0111, Train Acc: 99.70% - Val Loss: 0.0256, Val Acc: 99.40%
+2025-12-11 14:34:06,571 - INFO - Epoch [14/30] - Train Loss: 0.0104, Train Acc: 99.78% - Val Loss: 0.0344, Val Acc: 98.90%
+2025-12-11 14:34:12,131 - INFO - Epoch [15/30] - Train Loss: 0.0095, Train Acc: 99.83% - Val Loss: 0.0298, Val Acc: 99.20%
+2025-12-11 14:34:17,687 - INFO - Epoch [16/30] - Train Loss: 0.0103, Train Acc: 99.88% - Val Loss: 0.0254, Val Acc: 99.40%
+2025-12-11 14:34:23,177 - INFO - Epoch [17/30] - Train Loss: 0.0085, Train Acc: 99.85% - Val Loss: 0.0208, Val Acc: 99.60%
+2025-12-11 14:34:28,774 - INFO - Epoch [18/30] - Train Loss: 0.0106, Train Acc: 99.62% - Val Loss: 0.0258, Val Acc: 99.40%
+2025-12-11 14:34:34,321 - INFO - Epoch [19/30] - Train Loss: 0.0121, Train Acc: 99.75% - Val Loss: 0.0163, Val Acc: 99.50%
+2025-12-11 14:34:39,864 - INFO - Epoch [20/30] - Train Loss: 0.0087, Train Acc: 99.80% - Val Loss: 0.0238, Val Acc: 99.40%
+2025-12-11 14:34:45,439 - INFO - Epoch [21/30] - Train Loss: 0.0056, Train Acc: 99.88% - Val Loss: 0.0210, Val Acc: 99.70%
+2025-12-11 14:34:50,956 - INFO - Epoch [22/30] - Train Loss: 0.0040, Train Acc: 99.97% - Val Loss: 0.0185, Val Acc: 99.70%
+2025-12-11 14:34:56,479 - INFO - Epoch [23/30] - Train Loss: 0.0067, Train Acc: 99.80% - Val Loss: 0.0215, Val Acc: 99.50%
+2025-12-11 14:35:02,009 - INFO - Epoch [24/30] - Train Loss: 0.0048, Train Acc: 99.88% - Val Loss: 0.0287, Val Acc: 99.40%
+2025-12-11 14:35:07,516 - INFO - Epoch [25/30] - Train Loss: 0.0056, Train Acc: 99.88% - Val Loss: 0.0252, Val Acc: 99.50%
+2025-12-11 14:35:13,021 - INFO - Epoch [26/30] - Train Loss: 0.0050, Train Acc: 99.83% - Val Loss: 0.0210, Val Acc: 99.30%
+2025-12-11 14:35:18,534 - INFO - Epoch [27/30] - Train Loss: 0.0039, Train Acc: 99.97% - Val Loss: 0.0204, Val Acc: 99.50%
+2025-12-11 14:35:23,977 - INFO - Epoch [28/30] - Train Loss: 0.0061, Train Acc: 99.80% - Val Loss: 0.0318, Val Acc: 99.10%
+2025-12-11 14:35:29,540 - INFO - Epoch [29/30] - Train Loss: 0.0058, Train Acc: 99.78% - Val Loss: 0.0313, Val Acc: 98.90%
+2025-12-11 14:35:35,115 - INFO - Epoch [30/30] - Train Loss: 0.0030, Train Acc: 99.90% - Val Loss: 0.0322, Val Acc: 99.10%
+2025-12-11 14:35:35,116 - INFO - 已加载最佳模型 (验证准确率: 99.70%)
+2025-12-11 14:35:35,116 - INFO - 训练完成，耗时: 167.25 秒
+2025-12-11 14:35:35,116 - INFO - 开始评估...
+2025-12-11 14:35:35,399 - INFO - === 测试集性能评估 ===
+2025-12-11 14:35:35,399 - INFO - 准确率 (Accuracy): 0.6017
+2025-12-11 14:35:35,399 - INFO - 精确率 (Precision): 0.7223
+2025-12-11 14:35:35,399 - INFO - 召回率 (Recall): 0.6017
+2025-12-11 14:35:35,399 - INFO - F1分数: 0.6157
+2025-12-11 14:35:35,400 - INFO - 混淆矩阵:
+[[715 661]
+ [122 468]]
+2025-12-11 14:35:35,405 - INFO - 模型已保存到: outputs/models/ShallowConvNet_best.pth
+2025-12-11 14:35:36,267 - INFO - === 训练完成 ===
+2025-12-11 14:35:36,267 - INFO - 最佳验证准确率: 99.70%
+2025-12-11 14:35:36,267 - INFO - 测试准确率: 0.6017
+2025-12-11 14:35:36,267 - INFO - 日志文件: outputs/logs/ShallowConvNet_training_log_20251211_143247.txt
