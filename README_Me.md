@@ -1,8 +1,8 @@
-# 🧠 癫痫预测系统 - 多模型对比研究
+# 🧠 癫痫预测 - 多模型对比研究
 
 **基于深度学习的EEG癫痫检测与分型框架**
 
-本项目实现了多种先进的深度学习模型用于EEG癫痫检测，专为CHB-MIT数据集优化，提供完整的训练、测试和可视化分析流程。
+本项目实现了多种先进的深度学习模型用于EEG癫痫检测，使用公开的CHB-MIT数据集优化，提供完整的训练、测试和可视化分析流程。
 
 ## 🎯 项目特色
 
@@ -14,16 +14,16 @@
 - **脑电地形图可视化**: 提供临床可解释的诊断依据
 - **完整测试套件**: 模型兼容性和集成测试
 
-### 📊 **支持的模型架构**
+### 📊 **训练的模型架构**
 
-| 模型 | 类型 | 特殊功能 | 推荐场景 |
-|------|------|----------|----------|
-| **BaseEEGNet** | 基础CNN | 轻量级卷积网络 | 快速原型、基线对比 |
-| **AttentionEEGNet** | CNN+注意力 | 通道+空间注意力 | 中等复杂度场景 |
-| **AttentionBiLSTM** | LSTM+注意力 | 多尺度注意力+时序建模 | **高精度检测(推荐)** |
-| **DeepConvNet** | 深度CNN | 多层卷积特征提取 | 复杂模式识别 |
-| **ShallowConvNet** | 浅层CNN | 快速训练收敛 | 实时检测应用 |
-| **TCFormer** | Transformer | 多核卷积+自注意力 | **最新架构研究** |
+| 模型 | 类型 | 模型架构 | 
+|------|------|----------|
+| **BaseEEGNet** | 基础CNN | 轻量级卷积网络 |
+| **AttentionEEGNet** | CNN+注意力 | 通道+空间注意力 
+| **AttentionBiLSTM** | LSTM+注意力 | 多尺度注意力+时序建模
+| **DeepConvNet** | 深度CNN | 多层卷积特征提取 
+| **ShallowConvNet** | 浅层CNN | 快速训练收敛 
+| **TCFormer** | Transformer | 多核卷积+自注意力
 
 ## 🚀 快速开始
 
@@ -35,65 +35,108 @@ conda create -n epilepsy_detection python=3.11
 conda activate epilepsy_detection
 
 # 安装依赖
-pip install -r requirements_enhanced.txt
+pip install -r requirements_enhanced.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ### 2️⃣ **数据准备**
+
+
+需要从 [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/ "公开数据集CHB-MIT下载链接") 下载公开数据集 CHB-MIT<span style="color: #888888;">（由于数据集太大我们只选取了前5个病人的数据进行研究）</span>
 
 ```bash
 # 运行内存优化的数据预处理脚本
 python prepare_data_balanced_memory.py
 ```
 
-**数据处理特性**:
-- 内存效率优化，支持大规模数据集
-- 自动数据平衡（SMOTE + 欠采样）
-- 滑动窗口分割（2秒窗口，512个时间点）
-- 带通滤波预处理（0.5-40Hz）
+**数据处理详细流程**:
 
-### 3️⃣ **模型训练**
+#### 📊 **CHB-MIT数据集处理**
+- **数据来源**: CHB-MIT Scalp EEG Database (PhysioNet)
+- **患者数量**: 24名儿童癫痫患者 (本研究使用前5名患者数据)
+- **通道配置**: 23通道头皮EEG记录
+- **采样频率**: 256 Hz
+- **数据格式**: EDF (European Data Format)
 
-```bash
-# 训练多尺度注意力BiLSTM (推荐)
-python train_enhanced.py --model AttentionBiLSTM --save_attention
+#### 🔧 **预处理流程**
+1. **信号滤波**:
+   - 带通滤波: 0.5-40Hz
+   - 去除工频干扰和高频噪声
+   - 保留癫痫相关的关键频段
 
-# 训练Transformer模型 (最新)
-python train_enhanced.py --model TCFormer --epochs 50
+2. **时间窗口分割**:
+   - 窗口大小: 2秒 (512个时间点 @ 256Hz)
+   - 发作期重叠采样: 0.5秒步长 (提高发作期样本数)
+   - 非发作期采样: 2秒步长 (减少冗余)
 
-# 训练基础EEGNet
-python train_enhanced.py --model BaseEEGNet --batch_size 64
+3. **标签定义**:
+   - 发作期 (Ictal): 标签=1
+   - 非发作期 (Interictal): 标签=0
+   - 基于summary文件精确标注发作时间段
 
-# 训练深度卷积网络
-python train_enhanced.py --model DeepConvNet --learning_rate 0.0005
+#### ⚖️ **数据平衡策略**
+- **原始分布**: 严重不平衡 (发作期 << 非发作期)
+- **平衡方法**:
+  - 发作期样本: 重复采样增强
+  - 非发作期样本: 随机下采样
+  - 目标比例: 30% 发作期, 70% 非发作期
+- **最终数据集**:
+  - 训练集: 5,000样本 (1,500发作期 + 3,500非发作期)
+  - 测试集: 1,966样本 (590发作期 + 1,376非发作期)
 
-# 训练浅层卷积网络
-python train_enhanced.py --model ShallowConvNet
+#### 💾 **内存优化技术**
+- **生成器模式**: 避免一次性加载所有数据
+- **分批处理**: 1,000样本为一批，减少内存峰值
+- **临时文件**: 中间结果保存，支持大规模数据
+- **垃圾回收**: 及时释放内存，支持8GB GPU训练
 
-# 训练注意力EEGNet
-python train_enhanced.py --model AttentionEEGNet --save_attention
-```
-
-### 4️⃣ **可视化分析**
-
-```bash
-# 生成脑电地形图可视化
-python visualize_topomap.py --model AttentionBiLSTM
-python visualize_topomap.py --model TCFormer
-python visualize_topomap.py --model AttentionEEGNet
-```
-
-### 5️⃣ **测试验证**
+### 3️⃣ **测试验证**
 
 ```bash
 # 运行模型兼容性测试
 python test_comparison_models.py
 ```
 
+### 4️⃣ **模型训练**
+
+```bash
+# 训练多尺度注意力BiLSTM 
+python train_enhanced.py --model AttentionBiLSTM 
+
+# 训练Transformer模型
+python train_enhanced.py --model TCFormer 
+
+# 训练基础EEGNet
+python train_enhanced.py --model BaseEEGNet 
+
+# 训练深度卷积网络
+python train_enhanced.py --model DeepConvNet 
+
+# 训练浅层卷积网络
+python train_enhanced.py --model ShallowConvNet
+
+# 训练注意力EEGNet
+python train_enhanced.py --model AttentionEEGNet 
+```
+
+### 5️⃣ **可视化分析**
+
+```bash
+# 生成脑电地形图可视化
+python visualize_topomap.py --model AttentionBiLSTM
+python visualize_topomap.py --model TCFormer
+python visualize_topomap.py --model BaseEEGNet
+python visualize_topomap.py --model DeepConvNet
+python visualize_topomap.py --model ShallowConvNet
+python visualize_topomap.py --model AttentionEEGNet
+```
+
+
+
 ## 🏗️ 项目架构
 
 ```
 epilepsyPrediction/
-├── 📁 ablation_models/          # 🧠 深度学习模型库
+├── 📁 ablation_models/          # 🧠 深度学习模型库(消融实验)
 │   ├── AttentionBiLSTM.py      # 多尺度注意力BiLSTM
 │   ├── AttentionEEGNet.py      # 注意力增强EEGNet
 │   ├── BaseEEGNet.py           # 基础EEGNet
@@ -117,42 +160,50 @@ epilepsyPrediction/
 ├── 🐍 test_comparison_models.py # ✅ 模型测试脚本
 ├── 🐍 prepare_data_balanced_memory.py # 📊 数据预处理
 ├── 📄 requirements_enhanced.txt # 📦 项目依赖
-└── 📖 README_Enhanced.md        # 📚 项目文档
+└── 📖 README.md        # 📚 项目文档
 ```
 
 ## 🧠 模型架构详解
 
-### 🔍 **AttentionBiLSTM - 多尺度注意力架构**
+### 🎯 **核心创新: AttentionEEGNet**
 
-**三层注意力设计**:
-1. **通道注意力 (ChannelAttention)**
-   - 自适应选择重要的EEG频带特征
-   - 基于全局平均池化的特征重要性评估
-   - 突出病理脑区活动模式
+**本文提出的AttentionEEGNet是在BaseEEGNet基础上的创新改进，构成消融实验对比**:
 
-2. **时间注意力 (TemporalAttention)**
-   - 多头自注意力机制 (4个注意力头)
-   - 专注于癫痫发作关键时刻
-   - 捕捉长距离时序依赖关系
+#### 🔥 **多层注意力机制设计**
+1. **通道注意力模块 (Channel Attention)**
+   - SE-Net变体设计，结合平均池化和最大池化
+   - 自适应学习重要EEG通道权重
+   - 突出病理相关的脑区活动模式
 
-3. **双向LSTM骨干网络**
-   - 2层双向LSTM (隐藏层128维)
-   - 提取前后时序上下文特征
-   - 处理序列的双向信息流
+2. **空间注意力模块 (Spatial Attention)**
+   - 基于通道维度统计的空间特征增强
+   - 7×7卷积核进行空间注意力计算
+   - 聚焦于空间上的关键区域
 
-### 🚀 **TCFormer - Transformer架构**
+3. **特征级注意力 (Feature-level Attention)**
+   - 分类前的特征级权重调整机制
+   - 全连接层生成注意力权重
+   - 进一步优化最终特征表示
 
-**创新设计**:
-- **多核卷积块**: 16、32、64不同尺度的时域卷积核
-- **多头注意力**: 8个注意力头的自注意力机制
-- **时域卷积网络**: 因果卷积保持时序关系
-- **残差连接**: 深层网络训练稳定性
+#### 📊 **消融实验设计**
+- **BaseEEGNet** (基线模型): 标准EEGNet架构，无注意力机制
+- **AttentionEEGNet** (本文模型): BaseEEGNet + 多层注意力机制
 
-### 📊 **传统CNN模型**
+### 🔍 **对比实验模型**
 
-- **BaseEEGNet**: 经典的脑机接口CNN架构
-- **DeepConvNet**: 深层卷积特征提取
-- **ShallowConvNet**: 浅层网络快速收敛
+#### **AttentionBiLSTM - 多尺度注意力架构**
+- 多头自注意力机制 (4个注意力头)
+- 2层双向LSTM (隐藏层128维)
+- 时序建模与注意力机制结合
+
+#### **TCFormer - Transformer混合架构**
+- 多核卷积块: 16、32、64不同尺度时域卷积
+- 8个注意力头的自注意力机制
+- 时域卷积网络保持因果关系
+
+#### **传统CNN对比模型**
+- **DeepConvNet**: 深层卷积特征提取网络
+- **ShallowConvNet**: 浅层网络快速收敛架构
 
 ## 📋 使用指南
 
@@ -203,14 +254,27 @@ done
 
 ### 🏆 **模型性能对比** (基于CHB-MIT测试集)
 
-| 模型 | 准确率 | F1分数 | 精确率 | 召回率 | 训练时间 | 内存占用 |
-|------|--------|--------|--------|--------|----------|----------|
-| **AttentionBiLSTM** | **~92%** | **~0.90** | **~0.89** | **~0.91** | 中等 | 4.3MB |
-| **TCFormer** | **~90%** | **~0.88** | **~0.87** | **~0.89** | 较慢 | ~8MB |
-| **AttentionEEGNet** | ~88% | ~0.85 | ~0.84 | ~0.86 | 快 | ~0.2MB |
-| **DeepConvNet** | ~86% | ~0.83 | ~0.82 | ~0.84 | 中等 | ~2MB |
-| **ShallowConvNet** | ~84% | ~0.81 | ~0.80 | ~0.82 | 很快 | ~1MB |
-| **BaseEEGNet** | ~82% | ~0.79 | ~0.78 | ~0.80 | 很快 | 0.01MB |
+#### **消融实验结果** (验证注意力机制有效性)
+| 模型 | 准确率 | F1分数 | 精确率 | 召回率 |
+|------|--------|--------|--------|--------|
+| **AttentionEEGNet** | **79.15%** | **80.00%** | **85.25%** | **79.15%** |
+| BaseEEGNet | 61.29% | 61.76% | 80.90% | 61.29% |
+
+#### **对比实验结果** (与其他先进方法对比)
+| 模型 | 准确率 | F1分数 | 精确率 | 召回率 | 参数量 |
+|------|--------|--------|--------|--------|--------|
+| **AttentionEEGNet** | **79.15%** | **80.00%** | **85.25%** | **79.15%** | **35,362** |
+| DeepConvNet | 75.79% | 76.72% | 80.33% | 75.79% | 278,277 |
+| AttentionBiLSTM | 69.99% | 57.63% | 48.99% | 69.99% | 1,128,194 |
+| BaseEEGNet | 61.29% | 61.76% | 80.90% | 61.29% | 1,986 |
+| ShallowConvNet | 60.17% | 61.57% | 72.23% | 60.17% | 40,122 |
+| TCFormer | 44.66% | 40.66% | 76.17% | 44.66% | 227,858 |
+
+**🎯 AttentionEEGNet核心优势**:
+- ✅ **显著性能提升**: 相比BaseEEGNet准确率提升17.86个百分点 (79.15% vs 61.29%)
+- ✅ **F1分数改善**: 从61.76%提升到80.00%，提升18.24个百分点
+- ✅ **参数效率**: 仅增加33K参数实现大幅性能提升
+- ✅ **计算效率**: 训练时间合理，适合实际应用部署
 
 ### 📊 **数据集统计**
 
