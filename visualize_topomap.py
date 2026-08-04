@@ -16,6 +16,16 @@ import argparse
 plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
+# 设置全局字体大小
+plt.rcParams.update({
+    'font.size': 26,
+    'axes.titlesize': 30,
+    'axes.labelsize': 26,
+    'xtick.labelsize': 22,
+    'ytick.labelsize': 22,
+    'legend.fontsize': 22
+})
+
 # 导入模型
 sys.path.append(os.path.join(os.path.dirname(__file__), 'ablation_models'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'advanced_models'))
@@ -752,7 +762,7 @@ def main_visualize():
     
     # 6. 绘制拓扑图
     print("\n--- 绘制拓扑图 ---")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 9))
     
     abs_weights = np.abs(weights)
     vmax = max(abs_weights.max(), 0.1)
@@ -767,9 +777,12 @@ def main_visualize():
             sensors=True, 
             axes=ax1, 
             vlim=(-vmax, vmax),
-            show=False
+            show=False,
+            ch_type='eeg',
+            size=2.5,
+            contours=0
         )
-        ax1.set_title(f"{args.model} Spatial Feature Weights\n(Red=Positive, Blue=Negative)", fontsize=14, pad=30)
+        ax1.set_title(f"{args.model} Spatial Feature Weights\n(Red=Positive, Blue=Negative)", fontsize=32, pad=40)
         
         # 右图: 绝对值权重 (重要性)
         im2 = mne.viz.plot_topomap(
@@ -780,13 +793,22 @@ def main_visualize():
             sensors=True, 
             axes=ax2, 
             vlim=(0, vmax),
-            show=False
+            show=False,
+            ch_type='eeg',
+            size=2.5,
+            contours=0
         )
-        ax2.set_title("Channel Importance Distribution\n(Darker=More Important)", fontsize=14, pad=30)
+        ax2.set_title("Channel Importance Distribution\n(Darker=More Important)", fontsize=32, pad=40)
         
         # 添加颜色条
-        plt.colorbar(im1[0], ax=ax1, shrink=0.8, label='Weight Value')
-        plt.colorbar(im2[0], ax=ax2, shrink=0.8, label='Importance')
+        cbar1 = plt.colorbar(im1[0], ax=ax1, shrink=0.8, label='Weight Value')
+        cbar2 = plt.colorbar(im2[0], ax=ax2, shrink=0.8, label='Importance')
+        
+        # 放大颜色条标签
+        cbar1.ax.tick_params(labelsize=28)
+        cbar2.ax.tick_params(labelsize=28)
+        cbar1.ax.set_ylabel('Weight Value', fontsize=30)
+        cbar2.ax.set_ylabel('Importance', fontsize=30)
         
     except Exception as e:
         print(f"绘制拓扑图失败: {e}")

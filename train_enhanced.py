@@ -32,6 +32,16 @@ import seaborn as sns
 plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
+# 设置全局字体大小
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12
+})
+
 # 导入模型
 from ablation_models.BaseEEGNet import EEGNet as BaseEEGNet
 from ablation_models.AttentionEEGNet import EEGNet as AttentionEEGNet
@@ -380,12 +390,15 @@ def plot_training_history(history, output_dir, model_name):
 
 def plot_confusion_matrix(cm, output_dir, model_name):
     """绘制混淆矩阵"""
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                xticklabels=['Normal', 'Seizure'], yticklabels=['Normal', 'Seizure'])
-    plt.title(f'{model_name} - Confusion Matrix')
-    plt.xlabel('Predicted Label')
-    plt.ylabel('True Label')
+                xticklabels=['Normal', 'Seizure'], yticklabels=['Normal', 'Seizure'],
+                annot_kws={'size': 16})
+    plt.title(f'{model_name} - Confusion Matrix', fontsize=18, pad=20)
+    plt.xlabel('Predicted Label', fontsize=16)
+    plt.ylabel('True Label', fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.savefig(f'{output_dir}/{model_name}_confusion_matrix.png', dpi=300, bbox_inches='tight')
     plt.close()
 

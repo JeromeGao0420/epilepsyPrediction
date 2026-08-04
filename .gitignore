@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Data files
+data/
+database/
+*.edf
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+.claude/
+.joycode/
+
+# Model files
+*.h5
+*.pkl
+*.pth
+outputs/models/
+
+# Logs
+*.log
+
+# Documents
+*.pdf
+*.doc
+*.docx
