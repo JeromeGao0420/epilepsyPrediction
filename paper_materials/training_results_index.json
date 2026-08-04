@@ -1,0 +1,32 @@
+{
+  "BaseEEGNet": {
+    "confusion_matrix": "outputs/BaseEEGNet_confusion_matrix.png",
+    "training_history": "outputs/BaseEEGNet_training_history.png",
+    "topomap_analysis": "outputs/BaseEEGNet_topomap_analysis.png"
+  },
+  "AttentionEEGNet": {
+    "confusion_matrix": "outputs/AttentionEEGNet_confusion_matrix.png",
+    "training_history": "outputs/AttentionEEGNet_training_history.png",
+    "topomap_analysis": "outputs/AttentionEEGNet_topomap_analysis.png"
+  },
+  "AttentionBiLSTM": {
+    "confusion_matrix": "outputs/AttentionBiLSTM_confusion_matrix.png",
+    "training_history": "outputs/AttentionBiLSTM_training_history.png",
+    "topomap_analysis": "outputs/AttentionBiLSTM_topomap_analysis.png"
+  },
+  "DeepConvNet": {
+    "confusion_matrix": "outputs/DeepConvNet_confusion_matrix.png",
+    "training_history": "outputs/DeepConvNet_training_history.png",
+    "topomap_analysis": "outputs/DeepConvNet_topomap_analysis.png"
+  },
+  "ShallowConvNet": {
+    "confusion_matrix": "outputs/ShallowConvNet_confusion_matrix.png",
+    "training_history": "outputs/ShallowConvNet_training_history.png",
+    "topomap_analysis": "outputs/ShallowConvNet_topomap_analysis.png"
+  },
+  "TCFormer": {
+    "confusion_matrix": "outputs/TCFormer_confusion_matrix.png",
+    "training_history": "outputs/TCFormer_training_history.png",
+    "topomap_analysis": "outputs/TCFormer_topomap_analysis.png"
+  }
+}

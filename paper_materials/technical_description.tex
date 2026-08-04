@@ -1,0 +1,32 @@
+
+\section{AttentionEEGNet模型架构}
+
+\subsection{模型概述}
+本文提出了一种基于多层注意力机制的EEG癫痫检测模型AttentionEEGNet。
+            该模型在传统EEGNet基础上融合了通道注意力、空间注意力和特征级注意力机制，
+            能够自适应地关注对癫痫检测最重要的EEG特征。实验结果表明，AttentionEEGNet
+            在CHB-MIT数据集上取得了优异的性能，相比基线模型有显著提升。
+
+\subsection{核心创新}
+\begin{itemize}
+\item 提出了多层注意力机制的EEG特征增强方法
+\item 设计了适用于EEG信号的渐进式注意力架构
+\item 在癫痫检测任务上验证了注意力机制的有效性
+\item 提供了完整的开源实现和实验对比
+\end{itemize}
+
+\subsection{{技术细节}}
+AttentionEEGNet模型在传统EEGNet基础上引入了三层注意力机制：
+
+\begin{enumerate}
+\item \textbf{通道注意力模块}：采用SE-Net变体，结合平均池化和最大池化
+\item \textbf{空间注意力模块}：基于通道维度统计进行空间特征增强  
+\item \textbf{特征级注意力}：在分类前对展平特征进行注意力加权
+\end{enumerate}
+
+\subsection{{实验设置}}
+\begin{itemize}
+\item 数据集：CHB-MIT Scalp EEG Database
+\item 预处理：0.5-40Hz带通滤波，2秒滑动窗口
+\item 训练参数：Adam优化器，学习率1e-3，批次大小32
+\end{itemize}

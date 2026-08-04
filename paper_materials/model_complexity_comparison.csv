@@ -1,0 +1,7 @@
+Model,Total Parameters,Trainable Parameters,Model Size (MB),Output Shape,Description
+BaseEEGNet,1986,1986,0.008,"(1, 2)",基础EEGNet模型，使用标准卷积结构
+AttentionEEGNet,35362,35362,0.135,"(1, 2)",本文提出的注意力增强EEGNet模型，融合多层注意力机制
+AttentionBiLSTM,1128194,1128194,4.304,"(1, 2)",多尺度注意力BiLSTM模型，结合时序建模和注意力机制
+DeepConvNet,278277,278277,1.062,"(1, 2)",深度卷积网络，多层卷积特征提取
+ShallowConvNet,40122,40122,0.153,"(1, 2)",浅层卷积网络，快速训练收敛
+TCFormer,227858,227858,0.869,"(1, 2)",Transformer-CNN混合模型，结合自注意力和时序卷积
